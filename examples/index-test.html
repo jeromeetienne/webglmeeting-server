@@ -1,0 +1,34 @@
+<!doctype html>
+<script src="webrtc.io.js"></script>
+<video id="you" autoplay></video>
+<script>
+	var hasPeerConnection	= window.PeerConnection ? true : false;
+	rtc.createStream({"video": true, "audio": true}, function(stream) {
+		rtc.attachStream(stream, 'you');
+	}, function(){
+		console.log('failed createStream', arguments)
+	});
+
+        var onLocalhost	= window.location.hostname === 'localhost'
+        			||  window.location.hostname === '127.0.0.1'
+        var serverUrl	= onLocalhost ? 'ws://localhost:4000/' : 'ws://jetienne.webglmeeting-server.jit.su/';
+        console.log('serverUrl', serverUrl)
+	rtc.connect(serverUrl, "superRoom");
+
+        rtc.on('add remote stream', function(stream, socketId) {
+		console.log("Adding remote stream...", socketId);
+
+		var video	= document.getElementById('you');
+		var clone	= video.cloneNode(false);
+		clone.id	= 'remote'+socketId;
+
+		document.body.appendChild(clone);
+
+		rtc.attachStream(stream, clone.id);
+        });
+        rtc.on('disconnect stream', function(socketId) {
+		console.log("Remove remote stream...", socketId);
+		var video	= document.getElementById('remote' + socketId);
+		if( video )	video.parentNode.removeChild(video);
+        });
+</script>
